@@ -1,0 +1,171 @@
+{
+  "_comment": "Truth Lenz AI - detector configuration. All weights and thresholds are documented below and editable without code changes. Scores are 0-100; 50 = neutral.",
+  "bands": {
+    "_comment": "Human-readable probability bands shown in the UI. These describe likelihood, NOT certainty.",
+    "ai_probability_bands": [
+      {
+        "label": "Strongly likely authentic",
+        "max": 20
+      },
+      {
+        "label": "Probably authentic",
+        "max": 40
+      },
+      {
+        "label": "Inconclusive",
+        "max": 60
+      },
+      {
+        "label": "Probably AI-generated",
+        "max": 80
+      },
+      {
+        "label": "Strongly likely AI-generated",
+        "max": 100
+      }
+    ]
+  },
+  "confidence": {
+    "_comment": "Confidence (how much to trust the probability) is modelled separately from probability. It starts from mean analyzer confidence and is reduced by the penalties below.",
+    "_disagreement_note": "If the confidence-weighted std-dev of analyzer AI scores exceeds this, signals are deemed to disagree.",
+    "base_from_analyzers": true,
+    "disagreement_std_threshold": 18,
+    "penalties": {
+      "fair_quality": 12,
+      "heavy_compression": 15,
+      "low_resolution": 20,
+      "missing_metadata": 8,
+      "poor_quality": 25,
+      "resized_likely": 10,
+      "screenshot_detected": 15,
+      "signal_disagreement": 20
+    }
+  },
+  "pipeline_stages": [
+    {
+      "id": "upload",
+      "label": "Upload"
+    },
+    {
+      "id": "inspection",
+      "label": "Image Inspection"
+    },
+    {
+      "id": "metadata",
+      "label": "Metadata Analysis"
+    },
+    {
+      "id": "pixel",
+      "label": "Pixel Forensics"
+    },
+    {
+      "id": "ai_artifacts",
+      "label": "AI Artifact Analysis"
+    },
+    {
+      "id": "manipulation",
+      "label": "Manipulation Check"
+    },
+    {
+      "id": "ensemble",
+      "label": "Ensemble Scoring"
+    },
+    {
+      "id": "verdict",
+      "label": "Final Verdict"
+    }
+  ],
+  "quality": {
+    "_comment": "Image-quality gates. Below min_analysis_resolution the evidence is too thin and the verdict becomes INCONCLUSIVE with 'insufficient evidence'.",
+    "allowed_mime_types": [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/bmp",
+      "image/heic",
+      "image/heif"
+    ],
+    "blur_variance_threshold": 60,
+    "max_analysis_dimension": 2048,
+    "max_upload_mb": 25,
+    "min_analysis_pixels": 16384,
+    "min_analysis_resolution": 128
+  },
+  "verdict_thresholds": {
+    "_comment": "Applied to the ensemble AI/manipulation probabilities (0-100). The margin requirements prevent flip-flopping when signals are close, and disagreement forces INCONCLUSIVE.",
+    "_margin_note": "To win, the leading hypothesis must exceed the runner-up by at least this margin; otherwise INCONCLUSIVE.",
+    "ai_likely": 60,
+    "authentic_max_ai": 40,
+    "authentic_max_manip": 40,
+    "manip_likely": 60,
+    "verdict_margin": 12
+  },
+  "version": "2.0.0",
+  "weights": {
+    "_comment": "Per-analyzer weight in the ensemble for the AI-generation probability and the manipulation probability. Higher weight = more influence. Rationale: signals with stronger empirical grounding (metadata signatures, frequency anomalies, noise characteristics) carry more weight than purely descriptive statistics.",
+    "ai_artifacts": {
+      "ai": 1.3,
+      "manip": 0.5,
+      "note": "Heuristic synthetic-texture indicators; kept honest about being heuristic."
+    },
+    "compression": {
+      "ai": 0.9,
+      "manip": 1.3,
+      "note": "Recompression and block inconsistencies are classic manipulation indicators."
+    },
+    "consistency": {
+      "ai": 0.8,
+      "manip": 1.0,
+      "note": "EXIF/internal contradictions undermine claimed provenance."
+    },
+    "external_model": {
+      "ai": 1.5,
+      "manip": 0.0,
+      "note": "A trained detector is ONE strong signal when present; never the whole verdict."
+    },
+    "frequency": {
+      "ai": 1.3,
+      "manip": 0.7,
+      "note": "Generative upsampling leaves spectral fingerprints; weaker for manual edits."
+    },
+    "manipulation": {
+      "ai": 0.5,
+      "manip": 1.4,
+      "note": "Copy-move / splicing indicators target manipulation specifically."
+    },
+    "metadata": {
+      "ai": 1.4,
+      "manip": 1.2,
+      "note": "Explicit generator/editing-software tags are the most direct evidence available locally."
+    },
+    "noise": {
+      "ai": 1.2,
+      "manip": 1.1,
+      "note": "Camera sensors leave consistent noise; synthetic images often deviate."
+    },
+    "pixel": {
+      "ai": 0.8,
+      "manip": 1.0,
+      "note": "ELA and texture anomalies feed both hypotheses."
+    },
+    "statistics": {
+      "ai": 0.4,
+      "manip": 0.4,
+      "note": "Descriptive; weak on its own, mainly supports quality assessment and charts."
+    },
+    "quality": {
+      "ai": 0.3,
+      "manip": 0.3,
+      "note": "Quality gates reliability; weak vote, mainly drives confidence penalties."
+    }
+  },
+  "ensemble_v2": {
+    "_comment": "Hybrid ensemble: forensic signals + ML detector signals + provenance. ML must NOT automatically dominate forensics (allow_ml_dominance=false caps ML weight at the forensics weight). Significant ML/forensics disagreement increases uncertainty and can force INCONCLUSIVE.",
+    "forensics_weight": 1.0,
+    "ml_weight": 1.0,
+    "provenance_weight": 0.6,
+    "allow_ml_dominance": false,
+    "ml_disagreement_threshold": 25,
+    "ml_disagreement_penalty": 15
+  }
+}
