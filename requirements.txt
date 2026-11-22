@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+reportlab
+numpy
+pillow
+scipy
+httpx
+jsonschema
+pytest
